@@ -1,7 +1,13 @@
 const readXlsxFile = require("read-excel-file/node");
 
+const profiles = new Array();
+var fecha;
+
 const upload = async (req, res) => {
+    
     try {
+        
+        var banks, activos, pasivos, capitales = new Array();
         if (req.file == undefined) {
             return res.status(400).send("Please upload an excel file");
         }
@@ -16,25 +22,32 @@ const upload = async (req, res) => {
             let exampleArray = [];
 
             rows.forEach((row) => {
+                if(row[0]!=null){
+                    if (row[0].includes("Información")){
+                        fecha = case_date(row[0].substring(24,row[0].length))
+                    }
+                }
                 if (row[0] === 'PERFIL FINANCIERO') {
-                    // then bank names has been found and must be stored temporarily to join financial data
-                    console.log(row);
+                    banks = row                
                 }
                 if (row[0] === 'ACTIVO') {
-                    // then characteristic has been found and must be stored temporarily to join financial data
-                    console.log(row);
+                    activos = row
                 }
-                // example of how this can be done using objects and arrays
-                let example = {
-                    id: row[0],
-                    value1: row[1],
-                    value2: row[2],
-                    value3: row[3],
-                };
-                // console.log(example); commented to get a cleaner console but can be used to test
-                exampleArray.push(example);
+                if (row[0] === 'PASIVO') {
+                    pasivos = row
+                }
+                if (row[0] === 'CAPITAL CONTABLE') {
+                    capitales = row
+                }
             });
-            //console.log(exampleArray);
+            
+            insert_profile(banks,activos,'ACTIVO');
+            insert_profile(banks,pasivos,'PASIVO');
+            insert_profile(banks,capitales,'CAPITAL CONTABLE');
+            
+
+            console.log(profiles)
+            
             res.status(200).send({
                 message: "File uploaded successfully"
             });
@@ -45,8 +58,45 @@ const upload = async (req, res) => {
             message: "Could not upload the file: " + req.file.originalname,
         });
     }
+    
 };
 
+function case_date(date_string){
+    const months = [
+        "enero",
+        "febrero",
+        "marzo",
+        "abril",
+        "mayo",
+        "junio",
+        "julio",
+        "agosto",
+        "septiembre",
+        "octubre",
+        "noviembre",
+        "diciembre",
+      ];
+      var temp = date_string.split(" de ");
+      months.forEach(element => {
+          if (temp[1] == element){
+            temp[1]=(months.indexOf(element)+1).toString();
+          }
+      });      
+      
+      return new Date(temp[2] + '-' + temp[1] + '-' + temp[0]);
+}
+
+function insert_profile(banks_array,feature_array,feature){
+    for (let i = 1; i < banks_array.length; i++) {
+        let profile = {
+            date:fecha,
+            amount:feature_array[i],
+            bank:banks_array[i],
+            feature:feature
+        }
+        profiles.push(profile)
+    }
+}
 
 module.exports = {
     upload,
