@@ -83,7 +83,7 @@ function case_date(date_string){
           }
       });      
       
-      return new Date(temp[2] + '-' + temp[1] + '-' + temp[0]);
+      return temp[2] + '-' + temp[1] + '-' + temp[0];
 }
 
 function insert_profile(banks_array,feature_array,feature){
